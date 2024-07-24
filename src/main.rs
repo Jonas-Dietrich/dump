@@ -3,9 +3,7 @@ use std::{
 };
 
 use axum::{
-    response::IntoResponse,
-    routing::post,
-    Json, Router,
+    http::status, response::IntoResponse, routing::{get, post}, Json, Router
 };
 use serde_json::json;
 
@@ -16,6 +14,7 @@ async fn main() {
 
 
     let app = Router::new()
+        .route("/status", get(get_status))
         .route("/start", post(start_server))
         .route("/stop", post(stop_server));
 
@@ -57,11 +56,21 @@ async fn start_server() -> impl IntoResponse {
         )
             .into_response();
     }
+    
+    create_lockfile();
 
     Command::new("screen")
         .args(["-S server", "-d", "-m", "/home/jonas/mc/starserter9.sh"]);
 
-    create_lockfile();
+    Command::new("screen")
+        .args(["-S server", "-X multiuser on"]);
+
+    Command::new("screen")
+        .args(["-S server", "-X acladd jonas"]);
+
+    Command::new("screen")
+        .args(["-S server", "-X acladd root"]);
+
 
     (
         [("Access-Control-Allow-Origin", "*")],
@@ -85,3 +94,14 @@ async fn stop_server() -> impl IntoResponse {
     )
         .into_response()
 }
+
+async fn get_status() -> impl IntoResponse {
+
+    let is = exists_lockfile();
+    (
+        [("Access-Control-Allow-Origin", "*")],
+        Json(json!({"running" : is})),
+    )
+        .into_response()
+}
+
