@@ -58,7 +58,7 @@ async fn start_server() -> impl IntoResponse {
     }
     
     create_lockfile();
-
+/* 
     Command::new("screen")
         .args(["-S server", "-d", "-m", "/home/jonas/mc/starserter9.sh"]);
 
@@ -70,7 +70,10 @@ async fn start_server() -> impl IntoResponse {
 
     Command::new("screen")
         .args(["-S server", "-X acladd root"]);
+*/
 
+    Command::new("bash")
+        .arg("/home/jonas/mc/startscript.sh");
 
     (
         [("Access-Control-Allow-Origin", "*")],
@@ -81,10 +84,16 @@ async fn start_server() -> impl IntoResponse {
 
 async fn stop_server() -> impl IntoResponse {
 
+    /* 
     Command::new("screen").args(["-S server", "-X stuff \"stop$(printf \\\\\\r)\""]);
     tokio::time::sleep(Duration::from_secs(17)).await;
 
     Command::new("screen").args(["-S server", "-X stuff $'\\003'"]);
+
+    */
+
+    Command::new("bash")
+        .arg("/home/jonas/mc/startscript.sh");
 
     delete_lockfile();
 
