@@ -72,8 +72,12 @@ async fn start_server() -> impl IntoResponse {
         .args(["-S server", "-X acladd root"]);
 */
 
-    Command::new("bash")
-        .arg("/home/jonas/mc/startscript.sh");
+    let put = Command::new("/home/jonas/mc/startscript.sh")
+        .output()
+        .expect("na na nanbrot");
+
+    let doener_schwitzer = String::from_utf8(put.stdout).expect("Hawidere");
+    println!("doner: {doener_schwitzer}");
 
     (
         [("Access-Control-Allow-Origin", "*")],
@@ -92,8 +96,12 @@ async fn stop_server() -> impl IntoResponse {
 
     */
 
-    Command::new("bash")
-        .arg("/home/jonas/mc/startscript.sh");
+    let out = Command::new("/home/jonas/mc/startscript.sh")
+        .output()
+        .expect("oida des woas ned");
+
+    let baby_gronk = String::from_utf8(out.stdout).expect("nichtimtakt");
+    println!("result : {baby_gronk}");
 
     delete_lockfile();
 
