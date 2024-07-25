@@ -12,17 +12,33 @@ const Kurbelview = () => {
     const [isTanking, setTanking] = useState<boolean>(false);
     const [isTankVoll, setTankVoll] = useState<boolean>(false);
     const [isLaufing, setLaufing] = useState<boolean>(false);
+    const [sinceWhen, setSinceWhen] = useState<Date | null>(null);
 
 
     useEffect(() => {
-        getServerStatus().then(setLaufing);
+        getServerStatus().then( ans => {
+            setLaufing(ans);
 
-        if (!isLaufing) {
-            getOnline().then(setTankVoll);
+            console.log("Laufing: " + isLaufing);
+
+        if (!ans) {
+
+            statusMc().then(isKurbling => {
+
+                if (isKurbling) {
+                    setKurbling(true);
+                } else {
+                    getOnline().then(setTankVoll);
+                }
+            })
         }
+        });
+
+        
 
         const timer = setInterval(() => {
             if (isTanking) {
+                console.log("checking for onness");
                 getOnline().then(oida => {
                     if (oida) { 
                         setTankVoll(true);
@@ -32,6 +48,16 @@ const Kurbelview = () => {
             }
 
         }, 10000);
+
+        const longInterval = setInterval(() => {
+
+            if (isKurbling) {
+                console.log("checking for laufing");
+                getServerStatus().then(setLaufing);;
+                setKurbling(false);
+            }
+
+        }, 50000);
 
     }, []);
 
@@ -78,12 +104,30 @@ const Kurbelview = () => {
             return;
         }
 
+        startMinecraft();
+        setSinceWhen(new Date);
+
         setKurbling(true);
+    }
+
+    const kurbelAb = () => {
+        let willErWirkli = confirm("Hawi, bist da sicha? Zockt da ned no wer?");
+        let wirkliwirkli = confirm("Gonz sicha? wonn da server no ned gonz on is kennat des desaströs san!");
+
+        if (!willErWirkli || wirkliwirkli) {
+            alert("Gott vagölts da.");
+            return;
+        }
+
+        stopMinecraft();
+        setKurbling(false);
+        setLaufing(false);
+        setTankVoll(false);
     }
 
 
     const getServerStatus = async () => {
-        const {data} = await axios.get("https://api.mcsrvstat.us/3/jondietrich.ddns.net");
+        const {data} = await axios.get("https://api.mcsrvstat.us/3/ankurbler.ddns.net");
         console.log("is server running? : " + data.online);
         return data.online;
     }
@@ -99,12 +143,36 @@ const Kurbelview = () => {
         return data.message;
     }
 
+    const startMinecraft = async () => {
+        const {data} = await axios.post("http://ankurbler.ddns.net:3000/startmc");
+        return data.running;
+    }
+
+    const stopMinecraft = async () => {
+        const {data} = await axios.post("http://ankurbler.ddns.net:3000/stopmc");
+        return data.running;
+    }
+
+    const statusMc = async () => {
+        const {data} = await axios.get("http://ankurbler.ddns.net:3000/mcstatus");
+
+        return data.on;
+    }
+
     const gifler = () => {
         if (isKurbling) return <img src={kurblGif}></img>;
         else if (isTanking) return <img src={tankGif}></img>;
         else if (isLaufing) return <img src={laftGif}></img>;
         else if (isTankVoll) return <img src={voll}></img>;
         else return <img src={forst}></img>;
+    }
+
+    const since = () => {
+        if (since != null) {
+            const currDate = new Date;
+            const diff = currDate.getTime() - (sinceWhen?.getTime() as number);
+            return `Kurbling for ${diff.valueOf} milliseconds.`;
+        }
     }
 
     return (<div>
@@ -114,9 +182,13 @@ const Kurbelview = () => {
 
         <button onClick={tankVoll}>Volltanken</button>
         
-        <button onClick={kurbelAn}>ankurblen</button>
+        <button onClick={kurbelAn}>Ankurblen</button>
         
         {gifler()}
+
+        <button onClick={kurbelAb}>Abkurbeln</button>
+
+
 
     </div>);
 }
